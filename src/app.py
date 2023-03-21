@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for, json
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from datastructures import FamilyStructure
@@ -14,6 +14,24 @@ CORS(app)
 
 # create the jackson family object
 jackson_family = FamilyStructure("Jackson")
+member1 = { "id" : jackson_family._generateId(),
+            "firstname" :"John", 
+            "lastname": "Jackson",
+            "age" : 33, 
+            "luckyNumbers": [7, 13, 22]}
+member2 = { "id" : jackson_family._generateId(),
+            "firstname" :"Jane", 
+            "lastname": "Jackson",
+            "age" : 35, 
+            "luckyNumbers": [10, 14, 3]}
+member3 = { "id" : jackson_family._generateId(),
+            "firstname" :"Jimmy", 
+            "lastname": "Jackson",
+            "age" : 5, 
+            "luckyNumbers": [1]}
+jackson_family.add_member(member1)
+jackson_family.add_member(member2)
+jackson_family.add_member(member3)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -37,6 +55,43 @@ def handle_hello():
 
 
     return jsonify(response_body), 200
+
+@app.route('/member/<int:id>', methods=['GET'])
+def get_member(id):
+    
+    response_body = {
+        "response": "OK",
+        "status": "200",
+        "member": jackson_family.get_member(id)
+    }
+
+    return jsonify(response_body), 200
+
+@app.route('/member', methods=['POST'])
+def add_member():
+    data = json.loads(request.data)
+    jackson_family.add_member(data)
+    
+    response_body = {
+        "response": "OK",
+        "status": "200",
+        "msg": "Member created"
+    }
+    
+    return jsonify(response_body), 200
+
+@app.route('/member/<int:id>', methods=['DELETE'])
+def delete_member(id):
+    
+    jackson_family.delete_member(id)
+    
+    response_body = {
+        "response": "OK",
+        "status": "200",
+        "msg": "Member delete"
+    }
+    
+    return jsonify(response_body)
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
